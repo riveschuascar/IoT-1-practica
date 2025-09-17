@@ -11,5 +11,5 @@ class UltrasonicSensor {
     UltrasonicSensor(int tPin, int ePin);
     
     // Devuelve distancia en cm (int). Si no hay lectura válida devuelve -1.
-    int readDistanceCm();
+    float readDistanceCm();
 };

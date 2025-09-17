@@ -9,7 +9,7 @@ UltrasonicSensor::UltrasonicSensor(int tPin, int ePin) {
   digitalWrite(trigPin, LOW);
 }
 
-int UltrasonicSensor::readDistanceCm() {
+float UltrasonicSensor::readDistanceCm() {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
@@ -22,5 +22,5 @@ int UltrasonicSensor::readDistanceCm() {
     return -1;
   }
   float cm = (dur * 0.0343f) / 2.0f;  // velocidad sonido ~343 m/s
-  return (int)(cm + 0.5f);
+  return cm;
 }

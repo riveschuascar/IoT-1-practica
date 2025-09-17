@@ -16,9 +16,6 @@ void SmartDoor::writeAngle(int angle) {
   if (!attached) return;
   if (angle == lastAngle) return;
 
-  if (angle < 0) angle = 0;
-  if (angle > 180) angle = 180;
-
   servo.write(angle);
   lastAngle = angle;
 

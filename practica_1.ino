@@ -6,58 +6,57 @@
 const byte TRIG_PIN = 25;
 const byte ECHO_PIN = 26;
 const byte SERVO_PIN = 27;
-const unsigned long LOOP_DELAY_MS = 10;
+const unsigned long LOOP_DELAY_MS = 100;
 
-const byte CRITICAL_CM = 20;
-const byte MEDIUM_CM   = 50;
+const float CLOSE_CM = 20.0f;
+const float MEDIUM_CM   = 50.0f;
 
 
 // objetos
 UltrasonicSensor sensor(TRIG_PIN, ECHO_PIN);
 SmartDoor door(SERVO_PIN);
 MedianFilter3 medFilter;
-bool useMedian = true;
+bool useMedian = false;
 
 void setup() {
   Serial.begin(115200);
   door.begin();
   // inicializamos buffer de la mediana con lecturas inválidas
   medFilter.reset();
-  delay(100);
+  delay(3000);
 }
 
 void loop() {
-  int raw = sensor.readDistanceCm();  // -1 si inválido
-  if (raw == -1) {
-    Serial.println("Distancia: N/A");
-    // criterios: no decidir con lectura inválida -> no mover servo
-  } else {
-    Serial.print("Distancia: ");
-    Serial.print(raw);
-    Serial.println(" cm");
-  }
-
-  int valueToUse = raw;
-  if (useMedian) {
-    medFilter.push(raw);
-    int med = medFilter.median();
-    // med puede ser -1 si todas inválidas
-    valueToUse = med;
-  }
-
-  // Si valueToUse es -1 -> no decidir mover servo
-  if (valueToUse != -1) {
-    if (valueToUse <= CRITICAL_CM) {
-      // caso crítico -> 90°
-      door.writeAngle(90);
-    } else if (valueToUse <= MEDIUM_CM) {
-      // caso medio -> 45°
-      door.writeAngle(45);
-    } else {
-      door.writeAngle(0);
-      Serial.println("Rango lejano (>50cm): no cambiar ángulo");
+    float raw = sensor.readDistanceCm();
+    if (raw == -1) {
+        return;
     }
-  }
 
-  delay(LOOP_DELAY_MS);
+    float valueToUse = raw;
+
+    if (useMedian) {
+        medFilter.push(raw);
+        int med = medFilter.median();
+        if (med != -1) valueToUse = med; // usar mediana válida
+        Serial.print("Mediana: ");
+        Serial.print(med);
+        Serial.println(" cm");
+    }
+
+    // Determinar el ángulo objetivo
+    int targetAngle;
+    if (valueToUse > MEDIUM_CM) {
+        targetAngle = 90;
+    } else if (valueToUse > CLOSE_CM) {
+        targetAngle = 45;
+    } else {
+        targetAngle = 0;
+    }
+
+    if (door.getLastAngle() != targetAngle) {
+        door.writeAngle(targetAngle);
+    }
+    Serial.println(targetAngle);
+    Serial.println(door.getLastAngle());
+    delay(LOOP_DELAY_MS);
 }
